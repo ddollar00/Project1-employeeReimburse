@@ -151,7 +151,7 @@ server.put('/tickets/:id', (req, res) => {
     const ticket_id = req.params.id;
     const status = req.query.status;
     const adminStat = req.headers.currentemployee;
-    console.log(req.headers);
+
     if (adminStat == 1) {
 
 
