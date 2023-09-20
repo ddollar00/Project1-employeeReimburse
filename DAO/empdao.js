@@ -24,7 +24,7 @@ const docClient = new AWS.DynamoDB.DocumentClient();
 function postLogin(username, password) {
     const params = {
         TableName: 'user',
-        IndexName: 'username-index', // Specify the secondary index name
+        IndexName: 'username-index',
         KeyConditionExpression: 'username = :username',
         ExpressionAttributeValues: {
             ':username': username,
@@ -35,7 +35,7 @@ function postLogin(username, password) {
         // Try to query the user based on the username
         return docClient.query(params).promise()
             .then(data => {
-                const user = data.Items[0]; // Assuming usernames are unique
+                const user = data.Items[0];
 
                 // Check if the user exists and if the provided password matches
                 if (user && user.password === password) {
@@ -46,11 +46,11 @@ function postLogin(username, password) {
             })
             .catch(err => {
                 console.error('Error retrieving user:', err);
-                throw err; // Rethrow the error for handling elsewhere if needed
+                throw err;
             });
     } catch (err) {
         console.error('Error:', err);
-        throw err; // Rethrow the error for handling elsewhere if needed
+        throw err;
     }
 }
 
@@ -118,7 +118,7 @@ function postRegister(user_id, username, password) {
         })
         .catch(err => {
             console.error('Error retrieving user:', err);
-            throw err; // Rethrow the error for handling elsewhere if needed
+            throw err;
         });
 
 };
@@ -175,7 +175,7 @@ function putUpdateTicketStatus(ticket_id, newStatus) {
         })
         .catch(err => {
             console.error('Error updating ticket:', err);
-            throw err; // Rethrow the error for handling elsewhere if needed
+            throw err;
         })
 
 
