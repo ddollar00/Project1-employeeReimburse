@@ -167,7 +167,7 @@ function putUpdateTicketStatus(ticket_id, newStatus) {
     return docClient.scan(paramss).promise()
         .then((data) => {
             const ticketStat = data.Items[0].status
-            if (ticketStat == 'Approved' || ticketStat == 'Denied') {
+            if (ticketStat === 'Approved' || ticketStat === 'Denied') {
                 return [0, { changed: true }]
             } else {
                 return [docClient.update(params).promise(), { changed: false }]
