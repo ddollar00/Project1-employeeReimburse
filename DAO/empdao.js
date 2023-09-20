@@ -154,9 +154,31 @@ function putUpdateTicketStatus(ticket_id, newStatus) {
             ':valuee': 'default'
         }
     }
+    const paramss = {
+        TableName: 'tickets',
+        FilterExpression: '#c = :value',
+        ExpressionAttributeNames: {
+            '#c': 'ticket_id'
+        },
+        ExpressionAttributeValues: {
+            ':value': ticket_id
+        }
+    };
+    return docClient.scan(paramss).promise()
+        .then((data) => {
+            const ticketStat = data.Items[0].status
+            if (ticketStat == 'Approved' || ticketStat == 'Denied') {
+                return [0, { changed: true }]
+            } else {
+                return [docClient.update(params).promise(), { changed: false }]
+            }
+        })
+        .catch(err => {
+            console.error('Error updating ticket:', err);
+            throw err; // Rethrow the error for handling elsewhere if needed
+        })
 
 
-    return docClient.update(params).promise();
 }
 
 

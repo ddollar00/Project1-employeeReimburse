@@ -157,14 +157,18 @@ server.put('/tickets/:id', (req, res) => {
 
         dao.putUpdateTicketStatus(ticket_id, status)
             .then((data) => {
-                res.send(`status was updated to ${status}`);
+                if (data[1].changed == false) {
+                    res.send(`status was updated to ${status}`);
+                } else {
+                    res.send(`This ticket was already updated`);
+                }
             })
             .catch((error) => {
                 res.send('ticket not found')
             })
     } else {
         res.send(
-            "This is forbidden for employee's"
+            "This is forbidden for employees"
         );
     }
 });
