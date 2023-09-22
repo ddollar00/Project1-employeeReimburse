@@ -78,6 +78,20 @@ function getUnResolvedTickets(status) {
 
     return docClient.scan(params).promise();
 }
+function getTicketsByType(type) {
+    const params = {
+        TableName: 'tickets',
+        FilterExpression: '#c = :value',
+        ExpressionAttributeNames: {
+            '#c': 'type'
+        },
+        ExpressionAttributeValues: {
+            ':value': type
+        }
+    };
+
+    return docClient.scan(params).promise();
+}
 function getPreviousTickets(name) {
     const params = {
         TableName: 'tickets',
@@ -253,5 +267,6 @@ module.exports = {
     postLogin             //done
     , getUser,
     retrieveAllTickets,
-    putChangeAdminStatus
+    putChangeAdminStatus,
+    getTicketsByType
 };

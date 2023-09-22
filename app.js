@@ -125,7 +125,16 @@ server.post('/submitTicket', validateNewTicket, (req, res) => {
     }
 
 });
-
+server.get('/tickets/type', (req, res) => {
+    const type = (req.query.type).toLowerCase();
+    dao.getTicketsByType(type)
+        .then((data) => {
+            res.send(data.Items)
+        })
+        .catch((err) => {
+            console.error(err);
+        })
+})
 
 server.get('/tickets/new', (req, res) => {
 
