@@ -121,7 +121,7 @@ server.post('/submitTicket', validateNewTicket, (req, res) => {
                 console.error(err);
             })
     } else {
-        res.send('missing ticket information')
+        res.send('missing ticket information , enter description,name,amount , and type')
     }
 
 });
