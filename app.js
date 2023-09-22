@@ -127,7 +127,7 @@ server.post('/submitTicket', validateNewTicket, (req, res) => {
 });
 
 
-server.get('/tickets/', (req, res) => {
+server.get('/tickets/new', (req, res) => {
 
     const status = req.query.status;
     const token = req.headers.authorization.split(' ')[1];
@@ -142,7 +142,37 @@ server.get('/tickets/', (req, res) => {
                     })
                     .catch((err) => {
                         res.send({
-                            message: 'no pending tickets'
+                            message: `no ${status}  tickets`
+                        });
+                    })
+
+            } else {
+                res.send(
+                    `This action is for admins you are an ${payload.role}`
+                );
+            }
+        }
+        ).catch((err) => {
+            console.error(err);
+        })
+
+});
+server.get('/tickets/all', (req, res) => {
+
+
+    const token = req.headers.authorization.split(' ')[1];
+
+    jwt.verifyTokenAndReturnPayload(token)
+        .then((payload) => {
+            if (payload.role === 'admin') {
+
+                dao.retrieveAllTickets()
+                    .then((data) => {
+                        res.send(data.Items);
+                    })
+                    .catch((err) => {
+                        res.send({
+                            message: 'no  tickets'
                         });
                     })
 

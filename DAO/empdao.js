@@ -188,7 +188,13 @@ function putUpdateTicketStatus(ticket_id, newStatus) {
 
 
 }
+function retrieveAllTickets() {
+    const params = {
+        TableName: 'tickets'
+    }
 
+    return docClient.scan(params).promise();
+}
 
 
 module.exports = {
@@ -198,5 +204,6 @@ module.exports = {
     getUnResolvedTickets,
     getPreviousTickets,   //done
     postLogin             //done
-    , getUser
+    , getUser,
+    retrieveAllTickets
 };

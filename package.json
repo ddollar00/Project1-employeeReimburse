@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/ddollar00/Project1-employeeReimburse#readme",
   "dependencies": {
-    "aws-sdk": "^2.1459.0",
+    "aws-sdk": "^2.1462.0",
     "bluebird": "^3.7.2",
     "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.6",
