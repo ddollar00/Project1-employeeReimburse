@@ -129,7 +129,7 @@ server.post('/submitTicket', validateNewTicket, (req, res) => {
 
 server.get('/tickets/new', (req, res) => {
 
-    const status = req.query.status;
+    const status = (req.query.status).toLowerCase();
     const token = req.headers.authorization.split(' ')[1];
 
     jwt.verifyTokenAndReturnPayload(token)
@@ -202,7 +202,7 @@ server.get('/tickets/old', (req, res) => {
 });
 server.put('/tickets/:id', (req, res) => {
     const ticket_id = req.params.id;
-    const status = req.query.status;
+    const status = (req.query.status).toLowerCase();
     const token = req.headers.authorization.split(' ')[1];
 
     jwt.verifyTokenAndReturnPayload(token)
