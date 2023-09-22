@@ -126,17 +126,36 @@ server.post('/submitTicket', validateNewTicket, (req, res) => {
 
 });
 
-server.get('/tickets', (req, res) => {
+
+server.get('/tickets/', (req, res) => {
+
     const status = req.query.status;
-    dao.getUnResolvedTickets(status)
-        .then((data) => {
-            res.send(data.Items);
+    const token = req.headers.authorization.split(' ')[1];
+
+    jwt.verifyTokenAndReturnPayload(token)
+        .then((payload) => {
+            if (payload.role === 'admin') {
+
+                dao.getUnResolvedTickets(status)
+                    .then((data) => {
+                        res.send(data.Items);
+                    })
+                    .catch((err) => {
+                        res.send({
+                            message: 'no pending tickets'
+                        });
+                    })
+
+            } else {
+                res.send(
+                    `This action is for admins you are an ${payload.role}`
+                );
+            }
+        }
+        ).catch((err) => {
+            console.error(err);
         })
-        .catch((err) => {
-            res.send({
-                message: 'no pending tickets'
-            });
-        })
+
 });
 server.get('/tickets/old', (req, res) => {
     const name = req.query.name;
