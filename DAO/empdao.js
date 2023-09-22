@@ -195,6 +195,53 @@ function retrieveAllTickets() {
 
     return docClient.scan(params).promise();
 }
+function putChangeAdminStatus(username, newRole) {
+    newRole = newRole === 'admin' ? true : false;
+
+    const params = {
+        TableName: 'user',
+        IndexName: 'username-index', // Specify the secondary index name
+        FilterExpression: 'username = :username',
+        ExpressionAttributeValues: {
+            ':username': username,
+        },
+    };
+
+    return docClient.scan(params).promise()
+        .then((data) => {
+            const user = data.Items[0]; // Assuming username is unique
+            if (user) {
+                return docClient.update({
+                    TableName: 'user',
+                    Key: {
+                        'user_id': user.user_id // Assuming 'user_id' is the primary key
+                    },
+                    UpdateExpression: 'set #admin = :newRole',
+                    ExpressionAttributeNames: {
+                        '#admin': 'admin'
+                    },
+                    ExpressionAttributeValues: {
+                        ':newRole': newRole
+                    }
+                }).promise();
+            } else {
+                throw new Error(`User with username '${username}' not found.`);
+            }
+        })
+        .then(() => {
+            return {
+                username: username,
+                admin: newRole
+            };
+        })
+        .catch(err => {
+            console.error('Error updating role:', err);
+            throw err;
+        });
+}
+
+
+
 
 
 module.exports = {
@@ -205,5 +252,6 @@ module.exports = {
     getPreviousTickets,   //done
     postLogin             //done
     , getUser,
-    retrieveAllTickets
+    retrieveAllTickets,
+    putChangeAdminStatus
 };

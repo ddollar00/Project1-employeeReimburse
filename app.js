@@ -234,6 +234,33 @@ server.put('/tickets/:id', (req, res) => {
         })
 
 });
+server.put('/admin/change', (req, res) => {
+    const user = req.body.username;
+    const newRole = req.body.newRole;
+    const token = req.headers.authorization.split(' ')[1];
+    jwt.verifyTokenAndReturnPayload(token)
+        .then((payload) => {
+            if (payload.role === 'admin') {
+
+                dao.putChangeAdminStatus(user, newRole)
+                    .then((data) => {
+                        console.log(data);
+                        res.send(`user: ${user} is now an ${data.admin === true ? 'admin' : 'employee'}`)
+                    })
+                    .catch((err) => {
+                        console.err(err);
+                    })
+
+            } else {
+                res.send(
+                    `This action is for admins you are an ${payload.role}`
+                );
+            }
+        }
+        ).catch((err) => {
+            console.error(err);
+        })
+})
 server.listen(PORT, () => {
     console.log(`server is listening on port: ${PORT}`);
 });
