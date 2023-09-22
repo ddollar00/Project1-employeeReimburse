@@ -6,9 +6,12 @@ const server = express();
 const dao = require('./DAO/empdao.js');
 const bodyParser = require('body-parser');
 const uuid = require('uuid')
-
-
+const cookieParser = require('cookie-parser');
+const jwt = require('./utility/jwt.js');
+server.use(cookieParser());
 server.use(bodyParser.json());
+
+
 function validateNewUser(req, res, next) {
     if (!req.body.username || !req.body.password) {
         req.body.valid = false;
@@ -27,17 +30,34 @@ function validateNewTicket(req, res, next) {
         next();
     }
 }
-
+server.get('/getuser', (req, res) => {
+    const body = req.body;
+    dao.getUser(body.username)
+        .then((data) => {
+            console.log(data);
+        })
+        .catch((err) => {
+            console.error(err);
+        })
+});
 server.post('/login', (req, res) => {
     const body = req.body;
+    const username = body.username;
+    const password = body.password;
 
-    dao.postLogin(body.username, body.password)
+    dao.postLogin(username, password)
         .then((data) => {
-            if (data.authenticated) {
+
+            if (data) {
+
+                const role = data.admin == false ? 'employee' : 'admin';
+                const token = jwt.makeToken(username, role)
                 res.send({
-                    message: "Login Successful"
+                    message: `Login Successful ${role}`,
+                    token: token
                 });
             } else {
+                res.statusCode = 400;
                 res.send({
                     message: "Login Unsuccessful"
                 });
@@ -61,7 +81,7 @@ server.post('/register', validateNewUser, (req, res) => {
     if (req.body.valid) {
         dao.postRegister(uuid.v4(), body.username, body.password)
             .then((data) => {
-                if (data[1].register == false) {
+                if (data[1].register === false) {
                     res.send({
                         message: "Username taken"
                     });
@@ -104,24 +124,8 @@ server.post('/submitTicket', validateNewTicket, (req, res) => {
         res.send('missing ticket information')
     }
 
-})
-server.put('/update', (req, res) => {
-    const body = req.body;
-
-    dao.putItem(body.grocery_item_id, body.newName)
-        .then((data) => {
-            res.send({
-                message: "Successfully updated Item!"
-            })
-        })
-        .catch((err) => {
-            res.send({
-                message: "Failed to update Item!"
-            });
-            console.error(err);
-        })
-
 });
+
 server.get('/tickets', (req, res) => {
     const status = req.query.status;
     dao.getUnResolvedTickets(status)
@@ -150,27 +154,36 @@ server.get('/tickets/old', (req, res) => {
 server.put('/tickets/:id', (req, res) => {
     const ticket_id = req.params.id;
     const status = req.query.status;
-    const adminStat = req.headers.currentemployee;
+    const token = req.headers.authorization.split(' ')[1];
 
-    if (adminStat == 1) {
+    jwt.verifyTokenAndReturnPayload(token)
+        .then((payload) => {
+            if (payload.role === 'admin') {
 
 
-        dao.putUpdateTicketStatus(ticket_id, status)
-            .then((data) => {
-                if (data[1].changed == false) {
-                    res.send(`status was updated to ${status}`);
-                } else {
-                    res.send(`This ticket was already updated`);
-                }
-            })
-            .catch((error) => {
-                res.send('ticket not found')
-            })
-    } else {
-        res.send(
-            "This is forbidden for employees"
-        );
-    }
+                dao.putUpdateTicketStatus(ticket_id, status)
+                    .then((data) => {
+                        if (data[1].changed == false) {
+                            res.send(`status was updated to ${status}`);
+                        } else {
+                            res.send(`This ticket was already updated`);
+                        }
+                    })
+                    .catch((error) => {
+                        res.send('ticket not found')
+                    })
+
+
+            } else {
+                res.send(
+                    `This action is for admins you are an ${payload.role}`
+                );
+            }
+        }
+        ).catch((err) => {
+            console.error(err);
+        })
+
 });
 server.listen(PORT, () => {
     console.log(`server is listening on port: ${PORT}`);

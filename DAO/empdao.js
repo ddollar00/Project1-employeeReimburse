@@ -20,7 +20,15 @@ AWS.config.update({
 
 const docClient = new AWS.DynamoDB.DocumentClient();
 
-
+function getUser(username) {
+    const param = {
+        TableName: 'user2',
+        Key: {
+            username
+        }
+    }
+    return docClient.get(param).promise();
+}
 function postLogin(username, password) {
     const params = {
         TableName: 'user',
@@ -39,9 +47,9 @@ function postLogin(username, password) {
 
                 // Check if the user exists and if the provided password matches
                 if (user && user.password === password) {
-                    return { authenticated: true, user };
+                    return user;
                 } else {
-                    return { authenticated: false };
+                    return false;
                 }
             })
             .catch(err => {
@@ -190,5 +198,5 @@ module.exports = {
     getUnResolvedTickets,
     getPreviousTickets,   //done
     postLogin             //done
-
+    , getUser
 };
