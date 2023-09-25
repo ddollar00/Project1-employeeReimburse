@@ -4,6 +4,7 @@ const PORT = 3000;
 const express = require('express');
 const server = express();
 const dao = require('./DAO/empdao.js');
+const daot = require('./DAO/ticketdao.js');
 const bodyParser = require('body-parser');
 const uuid = require('uuid')
 const cookieParser = require('cookie-parser');
@@ -15,7 +16,7 @@ server.use(bodyParser.json());
 function validateNewUser(req, res, next) {
     if (!req.body.username || !req.body.password) {
         req.body.valid = false;
-        next();
+        res.send({ message: 'Username or password are invalid' })
     } else {
         req.body.valid = true;
         next();
@@ -24,22 +25,13 @@ function validateNewUser(req, res, next) {
 function validateNewTicket(req, res, next) {
     if (!req.body.description || !req.body.name || !req.body.amount || !req.body.type) {
         req.body.valid = false;
-        next();
+        res.send({ message: 'missing information, enter name . description, amount, and type' })
     } else {
         req.body.valid = true;
         next();
     }
 }
-server.get('/getuser', (req, res) => {
-    const body = req.body;
-    dao.getUser(body.username)
-        .then((data) => {
-            console.log(data);
-        })
-        .catch((err) => {
-            console.error(err);
-        })
-});
+
 server.post('/login', (req, res) => {
     const body = req.body;
     const username = body.username;
@@ -65,6 +57,7 @@ server.post('/login', (req, res) => {
 
         })
         .catch((err) => {
+            res.statusCode = 400;
             res.send({
                 message: "Incorrect username or password"
             });
@@ -82,6 +75,7 @@ server.post('/register', validateNewUser, (req, res) => {
         dao.postRegister(uuid.v4(), body.username, body.password)
             .then((data) => {
                 if (data[1].register === false) {
+                    res.statusCode = 400;
                     res.send({
                         message: "Username taken"
                     });
@@ -105,7 +99,7 @@ server.post('/register', validateNewUser, (req, res) => {
 server.post('/submitTicket', validateNewTicket, (req, res) => {
     const body = req.body;
     if (req.body.valid) {
-        dao.postSubTicket(uuid.v4(), body.amount, body.description, body.name, body.type)
+        daot.postSubTicket(uuid.v4(), body.amount, body.description, body.name, body.type)
             .then((data) => {
 
                 res.send({
@@ -115,49 +109,52 @@ server.post('/submitTicket', validateNewTicket, (req, res) => {
 
             })
             .catch((err) => {
+                res.statusCode = 400;
                 res.send({
                     message: "Ticket not submitted"
                 });
                 console.error(err);
             })
     } else {
-        res.send('missing ticket information , enter description,name,amount , and type')
+        res.send({ message: 'missing ticket information , enter description,name,amount , and type' })
     }
 
 });
 server.get('/tickets/type', (req, res) => {
-    const type = (req.query.type).toLowerCase();
-    dao.getTicketsByType(type)
+    const type = (req.body.type).toLowerCase();
+    daot.getTicketsByType(type)
         .then((data) => {
             res.send(data.Items)
         })
         .catch((err) => {
+            res.statusCode = 400;
             console.error(err);
         })
 })
 
 server.get('/tickets/new', (req, res) => {
 
-    const status = (req.query.status).toLowerCase();
+    const status = (req.body.status).toLowerCase();
     const token = req.headers.authorization.split(' ')[1];
 
     jwt.verifyTokenAndReturnPayload(token)
         .then((payload) => {
             if (payload.role === 'admin') {
 
-                dao.getUnResolvedTickets(status)
+                daot.getUnResolvedTickets(status)
                     .then((data) => {
                         res.send(data.Items);
                     })
                     .catch((err) => {
+                        res.statusCode = 400;
                         res.send({
                             message: `no ${status}  tickets`
                         });
                     })
 
             } else {
-                res.send(
-                    `This action is for admins you are an ${payload.role}`
+                res.send({ message: `This action is for admins you are an ${payload.role}` }
+
                 );
             }
         }
@@ -166,7 +163,7 @@ server.get('/tickets/new', (req, res) => {
         })
 
 });
-server.get('/tickets/all', (req, res) => {
+server.get('/tickets', (req, res) => {
 
 
     const token = req.headers.authorization.split(' ')[1];
@@ -175,19 +172,21 @@ server.get('/tickets/all', (req, res) => {
         .then((payload) => {
             if (payload.role === 'admin') {
 
-                dao.retrieveAllTickets()
+                daot.retrieveAllTickets()
                     .then((data) => {
                         res.send(data.Items);
                     })
                     .catch((err) => {
+                        res.statusCode = 400;
                         res.send({
                             message: 'no  tickets'
                         });
                     })
 
             } else {
-                res.send(
-                    `This action is for admins you are an ${payload.role}`
+                res.statusCode = 400;
+                res.send({ message: `This action is for admins you are an ${payload.role}` }
+
                 );
             }
         }
@@ -197,13 +196,14 @@ server.get('/tickets/all', (req, res) => {
 
 });
 server.get('/tickets/old', (req, res) => {
-    const name = req.query.name;
+    const name = 'default';
 
-    dao.getPreviousTickets(name)
+    daot.getPreviousTickets(name)
         .then((data) => {
             res.send(data.Items);
         })
         .catch((err) => {
+            res.statusCode = 400;
             res.send({
                 message: 'no pending tickets'
             });
@@ -211,7 +211,7 @@ server.get('/tickets/old', (req, res) => {
 });
 server.put('/tickets/:id', (req, res) => {
     const ticket_id = req.params.id;
-    const status = (req.query.status).toLowerCase();
+    const status = (req.body.status).toLowerCase();
     const token = req.headers.authorization.split(' ')[1];
 
     jwt.verifyTokenAndReturnPayload(token)
@@ -219,23 +219,24 @@ server.put('/tickets/:id', (req, res) => {
             if (payload.role === 'admin') {
 
 
-                dao.putUpdateTicketStatus(ticket_id, status)
+                daot.putUpdateTicketStatus(ticket_id, status)
                     .then((data) => {
                         if (data[1].changed == false) {
-                            res.send(`status was updated to ${status}`);
+                            res.send({ message: `status was updated to ${status}` });
                         } else {
-                            res.send(`This ticket was already updated`);
+                            res.statusCode = 400;
+                            res.send({ message: 'This ticket was already updated' });
                         }
                     })
                     .catch((error) => {
-                        res.send('ticket not found')
+                        res.statusCode = 400;
+                        res.send({ message: 'ticket not found' })
                     })
 
 
             } else {
-                res.send(
-                    `This action is for admins you are an ${payload.role}`
-                );
+                res.statusCode = 400;
+                res.send({ message: `This action is for admins you are an ${payload.role}` });
             }
         }
         ).catch((err) => {
@@ -254,16 +255,16 @@ server.put('/admin/change', (req, res) => {
                 dao.putChangeAdminStatus(user, newRole)
                     .then((data) => {
                         console.log(data);
-                        res.send(`user: ${user} is now an ${data.admin === true ? 'admin' : 'employee'}`)
+                        res.send({ message: `user: ${user} is now an ${data.admin === true ? 'admin' : 'employee'}` })
                     })
                     .catch((err) => {
+                        res.statusCode = 400;
                         console.err(err);
                     })
 
             } else {
-                res.send(
-                    `This action is for admins you are an ${payload.role}`
-                );
+                res.statusCode = 400;
+                res.send({ message: `This action is for admins you are an ${payload.role}` });
             }
         }
         ).catch((err) => {

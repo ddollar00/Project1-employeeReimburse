@@ -20,15 +20,7 @@ AWS.config.update({
 
 const docClient = new AWS.DynamoDB.DocumentClient();
 
-function getUser(username) {
-    const param = {
-        TableName: 'user2',
-        Key: {
-            username
-        }
-    }
-    return docClient.get(param).promise();
-}
+
 function postLogin(username, password) {
     const params = {
         TableName: 'user',
@@ -64,49 +56,9 @@ function postLogin(username, password) {
 
 
 
-function getUnResolvedTickets(status) {
-    const params = {
-        TableName: 'tickets',
-        FilterExpression: '#c = :value',
-        ExpressionAttributeNames: {
-            '#c': 'status'
-        },
-        ExpressionAttributeValues: {
-            ':value': status
-        }
-    };
 
-    return docClient.scan(params).promise();
-}
-function getTicketsByType(type) {
-    const params = {
-        TableName: 'tickets',
-        FilterExpression: '#c = :value',
-        ExpressionAttributeNames: {
-            '#c': 'type'
-        },
-        ExpressionAttributeValues: {
-            ':value': type
-        }
-    };
 
-    return docClient.scan(params).promise();
-}
-function getPreviousTickets(name) {
-    const params = {
-        TableName: 'tickets',
-        IndexName: 'name-index',
-        KeyConditionExpression: '#name = :value',
-        ExpressionAttributeNames: {
-            '#name': 'name',
-        },
-        ExpressionAttributeValues: {
-            ':value': name,
-        }
-    };
 
-    return docClient.query(params).promise();
-}
 
 function postRegister(user_id, username, password) {
 
@@ -262,11 +214,10 @@ module.exports = {
     putUpdateTicketStatus,     //done
     postSubTicket,            //done
     postRegister,            //done
-    getUnResolvedTickets,
-    getPreviousTickets,   //done
+    //done
     postLogin             //done
-    , getUser,
+    ,
     retrieveAllTickets,
     putChangeAdminStatus,
-    getTicketsByType
+
 };
