@@ -121,7 +121,7 @@ function putUpdateTicketStatus(ticket_id, newStatus) {
             }
         })
         .catch(err => {
-            console.error('Error updating ticket:', err);
+            console.error(' Error updating ticket:', err);
             throw err;
         })
 
