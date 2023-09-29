@@ -13,6 +13,7 @@ function validateNewUser(req, res, next) {
     } else {
         req.body.valid = true;
         next();
+
     }
 }
 
@@ -24,12 +25,13 @@ router.post('/login', validateNewUser, (req, res) => {
             if (data) {
                 const role = data.admin === false ? 'employee' : 'admin';
                 const token = jwt.makeToken(username, role);
+                res.statusCode = 202;
                 res.send({
                     message: `login successful ${role}`,
                     token: token
                 })
             } else {
-                res.statusCode = (401);
+                res.statusCode = (400);
                 res.send({
                     message: 'login unsuccessful'
                 });
@@ -53,6 +55,7 @@ router.post('/register', (req, res) => {
                     message: 'username taken!'
                 });
             } else {
+                res.statusCode = 201;
                 res.send({
                     message: 'successfully registered user'
                 });
@@ -78,6 +81,8 @@ router.put('/change', (req, res) => {
                     })
                     .catch((err) => {
                         res.statusCode = 400;
+                        res.send({ message: `user: ${user} does not exist` })
+
                         console.err(err);
                     })
 

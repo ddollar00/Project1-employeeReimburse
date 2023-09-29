@@ -14,34 +14,52 @@ function validateNewTicket(req, res, next) {
     } else {
         req.body.valid = true;
         next();
+
     }
 }
 server.post('/submitTicket', validateNewTicket, (req, res) => {
     const body = req.body;
-    if (req.body.valid) {
-        ticService.postSubTicket(uuid.v4(), body.amount, body.description, body.name, body.type)
-            .then((data) => {
+    const token = req.headers.authorization.split(' ')[1];
 
-                res.send({
-                    message: "Ticket submitted successfully"
-                });
+    jwt.verifyTokenAndReturnPayload(token)
+        .then((payload) => {
+            if (payload.role !== 'admin') {
+
+                if (req.body.valid) {
+                    ticService.postSubTicket(body.amount, body.description, body.name, body.type)
+                        .then((data) => {
+                            res.statusCode = 201;
+                            res.send({
+                                message: "Ticket submitted successfully"
+                            });
 
 
-            })
-            .catch((err) => {
-                res.statusCode = 400;
-                res.send({
-                    message: "Ticket not submitted"
-                });
-                console.error(err);
-            })
-    } else {
-        res.send({ message: 'missing ticket information , enter description,name,amount , and type' })
-    }
+                        })
+                        .catch((err) => {
+                            res.statusCode = 400;
+                            res.send({
+                                message: "Ticket not submitted"
+                            });
+                            console.error(err);
+                        })
+                } else {
+                    res.send({ message: 'missing ticket information , enter description,name,amount , and type' })
+                }
+
+
+            } else {
+                res.send({ message: `This action is for employees you are an ${payload.role}` }
+
+                );
+            }
+        }
+        ).catch((err) => {
+            console.error(err);
+        })
 
 });
 server.get('/type', (req, res) => {
-    const type = (req.body.type).toLowerCase();
+    const type = (req.query.type).toLowerCase();
     ticService.getTicketsByType(type)
         .then((data) => {
             res.send(data.Items)
@@ -54,7 +72,7 @@ server.get('/type', (req, res) => {
 
 server.get('/new', (req, res) => {
 
-    const status = (req.body.status).toLowerCase();
+    const status = (req.query.status).toLowerCase();
     const token = req.headers.authorization.split(' ')[1];
 
     jwt.verifyTokenAndReturnPayload(token)
@@ -116,8 +134,8 @@ server.get('/', (req, res) => {
 
 });
 server.get('/old', (req, res) => {
-    const name = 'default';
 
+    const name = req.query.name
     ticService.getPreviousTickets(name)
         .then((data) => {
             res.send(data.Items);
@@ -142,6 +160,7 @@ server.put('/:id', (req, res) => {
                 ticService.putUpdateTicketStatus(ticket_id, status)
                     .then((data) => {
                         if (data[1].changed == false) {
+                            res.statusCode = 202;
                             res.send({ message: `status was updated to ${status}` });
                         } else {
                             res.statusCode = 400;
@@ -155,7 +174,7 @@ server.put('/:id', (req, res) => {
 
 
             } else {
-                res.statusCode = 400;
+                res.statusCode = 403;
                 res.send({ message: `This action is for admins you are an ${payload.role}` });
             }
         }

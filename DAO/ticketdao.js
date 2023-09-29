@@ -91,14 +91,12 @@ function putUpdateTicketStatus(ticket_id, newStatus) {
         Key: {
             ticket_id
         },
-        UpdateExpression: 'set #n = :value,#name = :valuee',
+        UpdateExpression: 'set #n = :value',
         ExpressionAttributeNames: {
-            '#n': 'status',
-            '#name': 'name'
+            '#n': 'status'
         },
         ExpressionAttributeValues: {
-            ':value': newStatus,
-            ':valuee': 'default'
+            ':value': newStatus
         }
     }
     const paramss = {
